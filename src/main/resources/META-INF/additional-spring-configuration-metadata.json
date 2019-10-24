@@ -1,0 +1,14 @@
+{
+  "properties": [
+    {
+      "name": "music.phone",
+      "type": "java.lang.String",
+      "description": "Description for music.phone."
+    },
+    {
+      "name": "music.password",
+      "type": "java.lang.String",
+      "description": "Description for music.password."
+    }
+  ]
+}
