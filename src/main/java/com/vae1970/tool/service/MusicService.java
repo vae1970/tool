@@ -60,7 +60,7 @@ public class MusicService {
         MusicUtil.playlistTracks(MusicOp.del, newPlaylist, trackList);
     }
 
-    private void move() {
+    public void move() {
         moveItem(userInfo.getTodayPlaylist(), userInfo.getTotalPlaylist());
         moveItem(userInfo.getTomorrowPlaylist(), userInfo.getTodayPlaylist());
     }

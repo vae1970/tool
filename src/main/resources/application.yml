@@ -1,0 +1,8 @@
+spring:
+  profiles:
+    active: dev,mixed
+  quartz:
+    job-store-type: memory
+music:
+  phone:
+  password:

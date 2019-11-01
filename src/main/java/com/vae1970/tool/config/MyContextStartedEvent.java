@@ -21,9 +21,12 @@ public class MyContextStartedEvent implements ApplicationListener<ContextRefresh
     @Autowired
     private UserInfo userInfo;
 
+    @Autowired
+    private MusicAccountProperties musicAccountProperties;
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
+        System.out.println(JSONObject.toJSONString(musicAccountProperties));
         musicService.init();
         System.out.println(JSONObject.toJSONString(userInfo));
     }

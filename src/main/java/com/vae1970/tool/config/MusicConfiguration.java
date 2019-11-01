@@ -2,6 +2,8 @@ package com.vae1970.tool.config;
 
 import com.vae1970.tool.dto.UserInfo;
 import com.vae1970.tool.service.MusicService;
+import org.quartz.JobBuilder;
+import org.quartz.JobDetail;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -22,6 +24,12 @@ public class MusicConfiguration {
     @Bean
     public UserInfo userInfo() {
         return new UserInfo();
+    }
+
+    @Bean
+    public JobDetail jobDetail(){
+        return JobBuilder.newJob().withIdentity("sampleJobA")
+                .storeDurably().build();
     }
 
 }

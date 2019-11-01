@@ -3,6 +3,9 @@ package com.vae1970.tool;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+/**
+ * @author dongzhou.gu
+ */
 @SpringBootApplication
 public class ToolApplication {
 
