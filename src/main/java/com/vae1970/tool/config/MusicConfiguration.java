@@ -1,6 +1,7 @@
 package com.vae1970.tool.config;
 
 import com.vae1970.tool.dto.UserInfo;
+import com.vae1970.tool.job.MovePlaylistJob;
 import com.vae1970.tool.service.MusicService;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
@@ -9,7 +10,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.event.EventListener;
 
 /**
  * @author dongzhou.gu
@@ -26,10 +26,5 @@ public class MusicConfiguration {
         return new UserInfo();
     }
 
-    @Bean
-    public JobDetail jobDetail(){
-        return JobBuilder.newJob().withIdentity("sampleJobA")
-                .storeDurably().build();
-    }
 
 }

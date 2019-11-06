@@ -56,8 +56,10 @@ public class MusicService {
             JSONObject track = tracks.getJSONObject(i);
             Optional.ofNullable(track).map(s -> s.getString("id")).ifPresent(trackList::add);
         }
-        MusicUtil.playlistTracks(MusicOp.add, oldPlaylist, trackList);
-        MusicUtil.playlistTracks(MusicOp.del, newPlaylist, trackList);
+        if (trackList.size() > 0) {
+            MusicUtil.playlistTracks(MusicOp.add, oldPlaylist, trackList);
+            MusicUtil.playlistTracks(MusicOp.del, newPlaylist, trackList);
+        }
     }
 
     public void move() {

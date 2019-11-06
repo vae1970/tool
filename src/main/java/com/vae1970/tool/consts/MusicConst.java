@@ -35,4 +35,10 @@ public class MusicConst {
      */
     public static final String LOGIN_STATUS_URL = DOMAIN + "/login/status";
 
+    public static final String MOVE_PLAYLIST_JOB_NAME = "movePlaylist";
+
+    public static final String MUSIC_GROUP_NAME = "movePlaylistJob";
+
+    public static final int INTERVAL_IN_SECONDS = 10;
+
 }
