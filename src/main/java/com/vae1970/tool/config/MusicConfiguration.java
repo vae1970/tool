@@ -11,6 +11,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import static com.vae1970.tool.consts.MusicConst.MOVE_PLAYLIST_JOB_NAME;
+import static com.vae1970.tool.consts.MusicConst.MUSIC_GROUP_NAME;
+
 /**
  * @author dongzhou.gu
  * @date 2019/10/24
@@ -26,5 +29,10 @@ public class MusicConfiguration {
         return new UserInfo();
     }
 
+    @Bean
+    public JobDetail dayMusic() {
+        return JobBuilder.newJob(MovePlaylistJob.class).withIdentity(MOVE_PLAYLIST_JOB_NAME, MUSIC_GROUP_NAME)
+                .storeDurably().build();
+    }
 
 }

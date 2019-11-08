@@ -4,20 +4,15 @@ import com.alibaba.fastjson.JSONObject;
 import com.vae1970.tool.dto.UserInfo;
 import com.vae1970.tool.job.MovePlaylistJob;
 import com.vae1970.tool.service.MusicService;
+import com.vae1970.tool.util.SpringContextUtil;
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
-import java.util.Random;
-import java.util.UUID;
-
-import static com.vae1970.tool.consts.MusicConst.*;
-import static org.quartz.TriggerBuilder.newTrigger;
+import static com.vae1970.tool.consts.MusicConst.MOVE_PLAYLIST_JOB_NAME;
+import static com.vae1970.tool.consts.MusicConst.MUSIC_GROUP_NAME;
 
 /**
  * @author dongzhou.gu
@@ -40,6 +35,8 @@ public class InitEvent implements ApplicationListener<ContextRefreshedEvent> {
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
+
+        System.out.println(userInfo);
         System.out.println(JSONObject.toJSONString(musicAccountProperties));
 
         try {
@@ -47,11 +44,14 @@ public class InitEvent implements ApplicationListener<ContextRefreshedEvent> {
         } catch (SchedulerException e) {
             e.printStackTrace();
         }
-        System.out.println(JSONObject.toJSONString(userInfo));
+
+
+        System.out.println(JSONObject.toJSONString(this.userInfo));
     }
 
     private void init() throws SchedulerException {
-        //        musicService.init();
+//                musicService.init();
+
         //  先移除旧任务，再开启新任务
         TriggerKey triggerKey = TriggerKey.triggerKey(MOVE_PLAYLIST_JOB_NAME, MUSIC_GROUP_NAME);
         scheduler.pauseTrigger(triggerKey);
@@ -59,21 +59,21 @@ public class InitEvent implements ApplicationListener<ContextRefreshedEvent> {
         scheduler.deleteJob(JobKey.jobKey(MOVE_PLAYLIST_JOB_NAME, MUSIC_GROUP_NAME));
 
 
-        JobDetail movePlaylistJob = JobBuilder.newJob(MovePlaylistJob.class).withIdentity("movePlaylistJob", "musicJobGroup")
+
+
+
+
+
+
+        System.out.println("-------------------------------------------------------------");
+        System.out.println(scheduler.getTrigger(triggerKey));
+
+        JobDetail movePlaylistJob = JobBuilder.newJob(MovePlaylistJob.class).withIdentity(MOVE_PLAYLIST_JOB_NAME, MUSIC_GROUP_NAME)
                 .storeDurably().build();
-
-        long intervalSeconds = new Random().longs(1, 0, INTERVAL_IN_SECONDS).findFirst().orElse(0L);
-        LocalDateTime currentTime = LocalDateTime.now().plusSeconds(intervalSeconds);
-        Date startAt = Date.from(currentTime.atZone(ZoneId.systemDefault()).toInstant());
-        Trigger trigger = newTrigger().startAt(startAt).withIdentity(UUID.randomUUID().toString(), "musicJobGroup")
-                .withSchedule(SimpleScheduleBuilder//SimpleScheduleBuilder是简单调用触发器，它只能指定触发的间隔时间和执行次数；
-                        .simpleSchedule()//创建一个SimpleScheduleBuilder
-                        .withIntervalInSeconds(10)//指定一个重复间隔,以毫秒为单位。
-                        .withRepeatCount(10))
-                .build();
+        Trigger trigger = MovePlaylistJob.getTrigger();
         scheduler.scheduleJob(movePlaylistJob, trigger);
-        scheduler.start();
-
+        System.out.println(scheduler.getTrigger(triggerKey));
+        System.out.println("-------------------------------------------------------------");
     }
 
 }

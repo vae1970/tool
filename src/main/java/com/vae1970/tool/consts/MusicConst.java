@@ -39,6 +39,6 @@ public class MusicConst {
 
     public static final String MUSIC_GROUP_NAME = "movePlaylistJob";
 
-    public static final int INTERVAL_IN_SECONDS = 10;
+    public static final int INTERVAL_IN_SECONDS = 9;
 
 }

@@ -1,19 +1,25 @@
 package com.vae1970.tool.util;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.stereotype.Component;
 
 /**
  * @author dongzhou.gu
  * @date 2019/10/24
  */
-public class SpringContextUtil implements ApplicationContextAware {
+@Slf4j
+@Component
+public class SpringContextUtil implements ApplicationContextAware, DisposableBean {
 
     private static ApplicationContext context;
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        log.info("ApplicationContextAware");
         context = applicationContext;
     }
 
@@ -32,4 +38,8 @@ public class SpringContextUtil implements ApplicationContextAware {
         return (T) context.getBean(classType);
     }
 
+    @Override
+    public void destroy() throws Exception {
+        context = null;
+    }
 }
