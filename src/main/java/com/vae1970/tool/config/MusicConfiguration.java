@@ -20,8 +20,6 @@ import static com.vae1970.tool.consts.MusicConst.MUSIC_GROUP_NAME;
  */
 @Configuration
 @EnableConfigurationProperties(MusicAccountProperties.class)
-@ConditionalOnClass(MusicService.class)
-@ConditionalOnProperty(prefix = "hello", value = "enable", matchIfMissing = true)
 public class MusicConfiguration {
 
     @Bean

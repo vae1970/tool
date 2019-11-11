@@ -3,12 +3,12 @@
     {
       "name": "music.phone",
       "type": "java.lang.String",
-      "description": "Description for music.phone."
+      "description": "Phone for music."
     },
     {
       "name": "music.password",
       "type": "java.lang.String",
-      "description": "Description for music.password."
+      "description": "Password for music."
     }
   ]
 }

@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -25,14 +26,12 @@ public class MovePlaylistJob implements Job {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        log.info("222222:");
-//        musicService.move();
+        musicService.move();
     }
 
     public static Trigger getTrigger() {
         long intervalSeconds = new Random().longs(1, 0, INTERVAL_IN_SECONDS).findFirst().orElse(0L);
-//        LocalDateTime currentTime = LocalDate.now().atStartOfDay().plusHours(1).plusSeconds(intervalSeconds);
-        LocalDateTime currentTime = LocalDateTime.now().plusSeconds(intervalSeconds);
+        LocalDateTime currentTime = LocalDate.now().atStartOfDay().plusHours(1).plusSeconds(intervalSeconds);
         log.info(currentTime.toString());
         Date startAt = Date.from(currentTime.atZone(ZoneId.systemDefault()).toInstant());
 

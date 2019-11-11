@@ -9,7 +9,7 @@ public class MusicConst {
     /**
      * 网易云域名
      */
-    private static final String DOMAIN = "http://127.0.0.1:8003";
+    private static final String DOMAIN = "http://127.0.0.1:3000";
     /**
      * 手机登录
      */
@@ -39,6 +39,6 @@ public class MusicConst {
 
     public static final String MUSIC_GROUP_NAME = "movePlaylistJob";
 
-    public static final int INTERVAL_IN_SECONDS = 9;
+    public static final int INTERVAL_IN_SECONDS = 3 * 60 * 60;
 
 }
