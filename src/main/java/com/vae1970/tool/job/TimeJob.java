@@ -1,6 +1,5 @@
 package com.vae1970.tool.job;
 
-import com.vae1970.tool.config.MusicAccountProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;
@@ -30,9 +29,6 @@ public class TimeJob {
     @Autowired
     private JobDetail dayMusic;
 
-    @Autowired
-    private MusicAccountProperties musicAccountProperties;
-
     private static final Map<JobDetail, Set<? extends Trigger>> TRIGGERS_AND_JOBS = new ConcurrentHashMap<>(1);
 
     /**
@@ -45,14 +41,6 @@ public class TimeJob {
         Set<Trigger> triggers = Stream.of(MovePlaylistJob.getTrigger()).collect(Collectors.toSet());
         TRIGGERS_AND_JOBS.put(dayMusic, triggers);
         scheduler.scheduleJobs(TRIGGERS_AND_JOBS, true);
-    }
-
-    @Scheduled(cron = "0/1 * * * * ? ")
-    public void job() {
-        System.out.println("s-s-s-s-s-s--s-s");
-        System.out.println(musicAccountProperties);
-        System.out.println("s-s-s-s-s-s--s-s");
-
     }
 
 }

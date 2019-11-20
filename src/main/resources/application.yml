@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: dev,mixed
+    active: dev, mixed
   quartz:
     job-store-type: memory
 music:

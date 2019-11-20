@@ -7,6 +7,7 @@ import com.vae1970.tool.enums.MusicOp;
 import com.vae1970.tool.util.MusicUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -48,17 +49,30 @@ public class MusicService {
     }
 
     private void moveItem(String oldPlaylist, String newPlaylist) {
-        JSONArray tracks = Optional.ofNullable(MusicUtil.playlistDetail(oldPlaylist)).map(HttpEntity::getBody)
-                .map(s -> JSONObject.parseObject("playlist")).map(s -> JSONObject.parseArray("tracks"))
-                .orElse(new JSONArray());
+        ResponseEntity<String> value = MusicUtil.playlistDetail(oldPlaylist);
+        JSONArray tracks;
+        try {
+            tracks = Optional.ofNullable(value).map(HttpEntity::getBody)
+                    .map(JSONObject::parseObject)
+                    .map(s -> s.getJSONObject("playlist"))
+                    .map(s -> s.getJSONArray("tracks"))
+                    .orElse(new JSONArray());
+        } catch (Exception e) {
+            tracks = new JSONArray();
+            System.out.println("-----------------------------------");
+            e.printStackTrace();
+        }
+        System.out.println(value == null ? null : value.getBody());
         List<Object> trackList = new ArrayList<>();
         for (int i = 0; i < tracks.size(); i++) {
             JSONObject track = tracks.getJSONObject(i);
             Optional.ofNullable(track).map(s -> s.getString("id")).ifPresent(trackList::add);
         }
         if (trackList.size() > 0) {
-            MusicUtil.playlistTracks(MusicOp.add, oldPlaylist, trackList);
-            MusicUtil.playlistTracks(MusicOp.del, newPlaylist, trackList);
+            ResponseEntity<String> responseEntity = MusicUtil.playlistTracks(MusicOp.add, oldPlaylist, trackList);
+            System.out.println(responseEntity);
+            ResponseEntity<String> responseEntity1 = MusicUtil.playlistTracks(MusicOp.del, newPlaylist, trackList);
+            System.out.println(responseEntity1);
         }
     }
 

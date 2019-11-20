@@ -35,9 +35,9 @@ public class InitEvent implements ApplicationListener<ContextRefreshedEvent> {
     @Autowired
     private JobDetail dayMusic;
 
+
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
-
         System.out.println(userInfo);
         System.out.println(JSONObject.toJSONString(musicAccountProperties));
         try {
@@ -49,7 +49,7 @@ public class InitEvent implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     private void init() throws SchedulerException {
-//        musicService.init();
+        musicService.init();
         //  先移除旧任务，再开启新任务
         TriggerKey triggerKey = TriggerKey.triggerKey(MOVE_PLAYLIST_JOB_NAME, MUSIC_GROUP_NAME);
         scheduler.pauseTrigger(triggerKey);
