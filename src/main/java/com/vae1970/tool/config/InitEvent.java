@@ -38,6 +38,7 @@ public class InitEvent implements ApplicationListener<ContextRefreshedEvent> {
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
+        userInfo.setUserId("65656416");
         System.out.println(userInfo);
         System.out.println(JSONObject.toJSONString(musicAccountProperties));
         try {

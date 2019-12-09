@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -32,7 +33,10 @@ public class MusicUtil {
         Map<String, String> map = new HashMap<>(2);
         map.put("phone", phone);
         map.put("password", password);
-        return doGet(map, MusicConst.LOGIN_URL);
+        Function<String, String> stringStringFunction = response -> Optional.ofNullable(response)
+                .map(JSONObject::parseObject).map(i -> i.getJSONObject("account"))
+                .map(i -> i.getString("id")).orElse(null);
+        return doGet(map, MusicConst.LOGIN_URL, null, stringStringFunction);
     }
 
     /**
@@ -40,8 +44,8 @@ public class MusicUtil {
      *
      * @return ResponseEntity
      */
-    public static ResponseEntity<String> loginStatus() {
-        return doGet(null, MusicConst.LOGIN_STATUS_URL);
+    public static ResponseEntity<String> loginStatus(String userKey) {
+        return doGet(null, MusicConst.LOGIN_STATUS_URL, userKey, null);
     }
 
     /**
@@ -49,8 +53,8 @@ public class MusicUtil {
      *
      * @return ResponseEntity
      */
-    public static ResponseEntity<String> refreshLogin() {
-        return doGet(null, MusicConst.REFRESH_LOGIN_URL);
+    public static ResponseEntity<String> refreshLogin(String userKey) {
+        return doGet(null, MusicConst.REFRESH_LOGIN_URL, userKey, null);
     }
 
     /**
@@ -58,10 +62,10 @@ public class MusicUtil {
      *
      * @return ResponseEntity
      */
-    public static ResponseEntity<String> playlist(String uid) {
+    public static ResponseEntity<String> playlist(String uid, String userKey) {
         Map<String, String> map = new HashMap<>(1);
         map.put("uid", uid);
-        return doGet(map, MusicConst.PLAYLIST_URL);
+        return doGet(map, MusicConst.PLAYLIST_URL, userKey, null);
     }
 
     /**
@@ -70,10 +74,10 @@ public class MusicUtil {
      * @param playlistId playlistId
      * @return ResponseEntity
      */
-    public static ResponseEntity<String> playlistDetail(String playlistId) {
+    public static ResponseEntity<String> playlistDetail(String playlistId, String userKey) {
         Map<String, String> map = new HashMap<>(1);
         map.put("id", playlistId);
-        return doGet(map, MusicConst.PLAYLIST_DETAIL_URL);
+        return doGet(map, MusicConst.PLAYLIST_DETAIL_URL, userKey, null);
     }
 
     /**
@@ -84,12 +88,12 @@ public class MusicUtil {
      * @param trackList tracks
      * @return ResponseEntity
      */
-    public static ResponseEntity<String> playlistTracks(MusicOp op, String pid, List<Object> trackList) {
+    public static ResponseEntity<String> playlistTracks(MusicOp op, String pid, List<Object> trackList, String userKey) {
         Map<String, String> map = new HashMap<>(3);
         map.put("op", op.name());
         map.put("pid", pid);
         map.put("tracks", trackList.stream().map(Object::toString).collect(Collectors.joining(",")));
-        return doGet(map, MusicConst.PLAYLIST_TRACK_URL);
+        return doGet(map, MusicConst.PLAYLIST_TRACK_URL, userKey, null);
     }
 
     /**
@@ -97,10 +101,10 @@ public class MusicUtil {
      *
      * @return boolean
      */
-    public static boolean checkLogin() {
-        ResponseEntity<String> loginStatus = MusicUtil.loginStatus();
+    public static boolean checkLogin(String userKey) {
+        ResponseEntity<String> loginStatus = MusicUtil.loginStatus(userKey);
         if (!HttpStatus.OK.equals(loginStatus.getStatusCode())) {
-            ResponseEntity<String> refreshLogin = MusicUtil.refreshLogin();
+            ResponseEntity<String> refreshLogin = MusicUtil.refreshLogin(userKey);
             if (!HttpStatus.OK.equals(refreshLogin.getStatusCode())) {
                 MusicAccountProperties account = SpringContextUtil.getBean(MusicAccountProperties.class);
                 ResponseEntity<String> login = MusicUtil.loginByPhone(account.getPhone(), account.getPassword());
@@ -110,9 +114,7 @@ public class MusicUtil {
                             .map(i -> i.get("id")).map(Object::toString)
                             .ifPresent(id -> {
                                 UserInfo userInfo = SpringContextUtil.getBean("userInfo");
-                                if (userInfo != null) {
-                                    userInfo.setUserId(id);
-                                }
+                                userInfo.setUserId(id);
                             });
                 }
                 return success;
@@ -128,11 +130,12 @@ public class MusicUtil {
      * @param uri    uri
      * @return ResponseEntity
      */
-    private static ResponseEntity<String> doGet(Map<String, String> params, String uri) {
-        ResponseEntity<String> responseEntity = HttpUtil.doGet(params, uri);
+    private static ResponseEntity<String> doGet(Map<String, String> params, String uri, String userKey
+            , Function<String, String> userKeyFunction) {
+        ResponseEntity<String> responseEntity = HttpUtil.doGet(params, uri, userKey, userKeyFunction);
         if (responseEntity.getStatusCode().equals(HttpStatus.MOVED_PERMANENTLY)) {
-            if (checkLogin()) {
-                return HttpUtil.doGet(params, uri);
+            if (checkLogin(userKey)) {
+                return HttpUtil.doGet(params, uri, userKey, userKeyFunction);
             }
         }
         return responseEntity;

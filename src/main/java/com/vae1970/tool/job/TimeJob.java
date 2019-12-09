@@ -36,7 +36,7 @@ public class TimeJob {
      *
      * @throws SchedulerException SchedulerException
      */
-    @Scheduled(cron = "0 0 1 * * ? ")
+    @Scheduled(cron = "0 12 11 * * ? ")
     public void musicJob() throws SchedulerException {
         Set<Trigger> triggers = Stream.of(MovePlaylistJob.getTrigger()).collect(Collectors.toSet());
         TRIGGERS_AND_JOBS.put(dayMusic, triggers);

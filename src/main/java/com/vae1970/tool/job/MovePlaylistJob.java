@@ -1,5 +1,6 @@
 package com.vae1970.tool.job;
 
+import com.vae1970.tool.dto.UserInfo;
 import com.vae1970.tool.service.MusicService;
 import com.vae1970.tool.util.SpringContextUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -24,9 +25,12 @@ public class MovePlaylistJob implements Job {
     @Autowired
     private MusicService musicService;
 
+    @Autowired
+    private UserInfo userInfo;
+
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        musicService.move();
+        musicService.move(userInfo.getUserId());
     }
 
     public static Trigger getTrigger() {

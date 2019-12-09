@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -28,10 +27,10 @@ public class ConcurrentObject<T> {
         }
     }
 
-    public void set(Consumer<T> consumer) {
+    public <V> V set(Function<T, V> function) {
         w.lock();
         try {
-            consumer.accept(data);
+            return function.apply(data);
         } finally {
             w.unlock();
         }

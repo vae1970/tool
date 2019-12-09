@@ -1,8 +1,6 @@
 package com.vae1970.tool.util;
 
-import com.alibaba.fastjson.JSONObject;
 import org.apache.http.Header;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.CookieStore;
@@ -19,11 +17,11 @@ import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.cookie.BasicClientCookie;
-import org.apache.http.impl.cookie.BestMatchSpecFactory;
-import org.apache.http.impl.cookie.BrowserCompatSpecFactory;
+import org.apache.http.impl.cookie.DefaultCookieSpecProvider;
 import org.apache.http.util.EntityUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.util.UriBuilder;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -33,6 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * @author dongzhou.gu
@@ -44,15 +43,47 @@ public class HttpUtil {
      */
     private static final ConcurrentObject<Map<String, Map<String, HttpClientContext>>> CONTEXT_MAP = new ConcurrentObject<>(new HashMap<>());
 
-
-    private static CookieStore cookieStore = null;
-    private static HttpClientContext context = null;
     private static final Charset ENCODING = StandardCharsets.UTF_8;
     private static final int CONNECT_TIMEOUT = 6000;
     private static final int SOCKET_TIMEOUT = 6000;
 
-    public static ResponseEntity<String> doGet(String uri) {
-        return doGet(null, null, uri, CONNECT_TIMEOUT, SOCKET_TIMEOUT, ENCODING);
+    static {
+        CONTEXT_MAP.set(map -> {
+            String domain = "http://127.0.0.1:3000/s";
+
+            Map<String, HttpClientContext> stringHttpClientContextMap = null;
+            try {
+                stringHttpClientContextMap = map.computeIfAbsent(new URIBuilder(domain).getHost(), k -> new HashMap<>(16));
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+
+            CookieStore cookieStore = new BasicCookieStore();
+            BasicClientCookie cookie1 = new BasicClientCookie("MUSIC_U", "4fcdf12fbb765d3fb6915760a74f0fecc6b337a95149f5f960b4db66c2b3604cabbae36d280a3d122d3c3f94f9a73db07955a739ab43dce1");
+            cookie1.setDomain(domain);
+            cookie1.setPath("/");
+            cookieStore.addCookie(cookie1);
+
+            BasicClientCookie cookie2 = new BasicClientCookie("__csrf", "ba5864537e99876ccf93f5f4f7b74cdb");
+            cookie2.setDomain(domain);
+            cookie2.setPath("/");
+            cookieStore.addCookie(cookie2);
+
+            BasicClientCookie cookie3 = new BasicClientCookie("__remember_me", "true");
+            cookie3.setDomain(domain);
+            cookie3.setPath("/");
+            cookieStore.addCookie(cookie3);
+
+            HttpClientContext context = HttpClientContext.create();
+            Registry<CookieSpecProvider> registry = RegistryBuilder
+                    .<CookieSpecProvider>create()
+                    .register(CookieSpecs.DEFAULT, new DefaultCookieSpecProvider())
+                    .build();
+            context.setCookieSpecRegistry(registry);
+            context.setCookieStore(cookieStore);
+            stringHttpClientContextMap.put("65656416", context);
+            return "";
+        });
     }
 
     /**
@@ -62,8 +93,9 @@ public class HttpUtil {
      * @param uri    uri
      * @return ResponseEntity<String>
      */
-    public static ResponseEntity<String> doGet(Map<String, String> params, String uri) {
-        return doGet(null, params, uri);
+    public static ResponseEntity<String> doGet(Map<String, String> params, String uri, String userKey
+            , Function<String, String> userKeyFunction) {
+        return doGet(null, params, uri, userKey, userKeyFunction);
     }
 
     /**
@@ -74,8 +106,9 @@ public class HttpUtil {
      * @param uri     uri
      * @return ResponseEntity<String>
      */
-    public static ResponseEntity<String> doGet(Map<String, String> headers, Map<String, String> params, String uri) {
-        return doGet(headers, params, uri, CONNECT_TIMEOUT, SOCKET_TIMEOUT, ENCODING);
+    public static ResponseEntity<String> doGet(Map<String, String> headers, Map<String, String> params, String uri
+            , String userKey, Function<String, String> userKeyFunction) {
+        return doGet(headers, params, uri, CONNECT_TIMEOUT, SOCKET_TIMEOUT, ENCODING, userKey, userKeyFunction);
     }
 
     /**
@@ -89,7 +122,9 @@ public class HttpUtil {
      * @param charset        charset
      * @return ResponseEntity<String>
      */
-    public static ResponseEntity<String> doGet(Map<String, String> headers, Map<String, String> params, String uri, int connectTimeout, int socketTimeout, Charset charset) {
+    public static ResponseEntity<String> doGet(Map<String, String> headers, Map<String, String> params, String uri
+            , int connectTimeout, int socketTimeout, Charset charset, String userKey
+            , Function<String, String> userKeyFunction) {
         try {
             CloseableHttpClient httpClient = HttpClients.custom().build();
             URIBuilder uriBuilder = new URIBuilder(uri);
@@ -109,66 +144,51 @@ public class HttpUtil {
                     httpGet.setHeader(entry.getKey(), entry.getValue());
                 }
             }
-            CloseableHttpResponse response = httpClient.execute(httpGet, new HttpClientContext());
-
-            response.getEntity();
-
-            HttpEntity entity = response.getEntity();
+            HttpClientContext context = getContext(uriBuilder, userKey);
+            CloseableHttpResponse response = httpClient.execute(httpGet, context);
             HttpStatus httpStatus = Optional.ofNullable(response.getStatusLine()).map(StatusLine::getStatusCode)
                     .map(HttpStatus::resolve).orElse(null);
-
-
-            Header firstHeader = response.getFirstHeader("Set-Cookie");
-            System.out.println(JSONObject.toJSONString(firstHeader));
-            setCookieStore(response, uri);
-            // context
-            setContext();
-            return httpStatus == null ? ResponseEntity.badRequest().build()
-                    : new ResponseEntity<>(EntityUtils.toString(entity, charset), httpStatus);
+            String responseString;
+            if (userKeyFunction != null) {
+                responseString = updateContext(response, uriBuilder, charset, userKeyFunction);
+            } else {
+                responseString = EntityUtils.toString(response.getEntity(), charset);
+            }
+            return httpStatus == null ? ResponseEntity.badRequest().build() : new ResponseEntity<>(responseString, httpStatus);
         } catch (IOException | URISyntaxException e) {
+//            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }
 
-    public static void setContext() {
-        context = HttpClientContext.create();
-        Registry<CookieSpecProvider> registry = RegistryBuilder
-                .<CookieSpecProvider>create()
-                .register(CookieSpecs.DEFAULT, new BestMatchSpecFactory())
-                .register(CookieSpecs.BROWSER_COMPATIBILITY,
-                        new BrowserCompatSpecFactory()).build();
-        context.setCookieSpecRegistry(registry);
-        context.setCookieStore(cookieStore);
-    }
-
-    public static void setCookieStore(HttpResponse httpResponse, String host) {
-        cookieStore = new BasicCookieStore();
-        // JSESSIONID
-        if (null == httpResponse.getFirstHeader("Set-Cookie")) {
-            cookieStore = null;
-        } else {
-            String setCookie = httpResponse.getFirstHeader("Set-Cookie").getValue();
-            String JSESSIONID = setCookie.substring("JSESSIONID=".length(), setCookie.indexOf(";"));
-            // 新建一个Cookie
-            BasicClientCookie cookie = new BasicClientCookie("JSESSIONID", JSESSIONID);
-            cookie.setVersion(0);
-            cookie.setDomain(host);
-            cookie.setPath("/");
-            cookieStore.addCookie(cookie);
-        }
-    }
-
-    public void updateContext(HttpResponse httpResponse, String domain, String userKey) {
-        CONTEXT_MAP.set(map -> {
-            Map<String, HttpClientContext> stringHttpClientContextMap = map.get(domain);
-
+    private static String updateContext(HttpResponse httpResponse, URIBuilder uriBuilder, Charset charset, Function<String, String> userKeyFunction) {
+        return CONTEXT_MAP.set(map -> {
+            String domain = uriBuilder.getHost();
+            Map<String, HttpClientContext> stringHttpClientContextMap = map.computeIfAbsent(domain, k -> new HashMap<>(16));
+            CookieStore cookieStore = getCookie(httpResponse, uriBuilder);
+            HttpClientContext context = HttpClientContext.create();
+            Registry<CookieSpecProvider> registry = RegistryBuilder
+                    .<CookieSpecProvider>create()
+                    .register(CookieSpecs.DEFAULT, new DefaultCookieSpecProvider())
+                    .build();
+            context.setCookieSpecRegistry(registry);
+            context.setCookieStore(cookieStore);
+            try {
+                String s = EntityUtils.toString(httpResponse.getEntity(), charset);
+                stringHttpClientContextMap.put(userKeyFunction.apply(s), context);
+                return s;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
         });
-
-
     }
 
+    private static HttpClientContext getContext(URIBuilder uriBuilder, String userKey) {
+        return CONTEXT_MAP.get(map -> Optional.of(map).map(i -> i.get(uriBuilder.getHost())).map(i -> i.get(userKey)).orElse(null));
+    }
 
-    public CookieStore getCookie(HttpResponse httpResponse, String domain) {
+    private static CookieStore getCookie(HttpResponse httpResponse, URIBuilder uriBuilder) {
         CookieStore cookieStore = new BasicCookieStore();
         Header[] headers = httpResponse.getHeaders("Set-Cookie");
         if (headers != null) {
@@ -177,8 +197,9 @@ public class HttpUtil {
                         .map(cookie -> cookie.split("=")).ifPresent(kv -> {
                             if (kv.length == 2) {
                                 BasicClientCookie cookie = new BasicClientCookie(kv[0], kv[1]);
-                                cookie.setDomain(domain);
-                                cookie.setPath("/");
+                                System.out.println(kv[0] + "   " + kv[1]);
+                                cookie.setDomain(uriBuilder.getHost());
+                                cookie.setPath(uriBuilder.getPath());
                                 cookieStore.addCookie(cookie);
                             }
                         }
@@ -187,6 +208,5 @@ public class HttpUtil {
         }
         return cookieStore;
     }
-
 
 }

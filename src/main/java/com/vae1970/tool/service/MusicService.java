@@ -25,8 +25,9 @@ public class MusicService {
     private UserInfo userInfo;
 
     public void init() {
-        MusicUtil.checkLogin();
-        JSONArray playlistArray = Optional.ofNullable(userInfo.getUserId()).map(MusicUtil::playlist).map(HttpEntity::getBody)
+        MusicUtil.checkLogin(userInfo.getUserId());
+        JSONArray playlistArray = Optional.ofNullable(userInfo.getUserId())
+                .map(i -> MusicUtil.playlist(i, userInfo.getUserId())).map(HttpEntity::getBody)
                 .map(JSONObject::parseObject).map(s -> s.getJSONArray("playlist")).orElse(new JSONArray());
         for (int i = 0; i < playlistArray.size(); i++) {
             JSONObject playlist = playlistArray.getJSONObject(i);
@@ -48,11 +49,11 @@ public class MusicService {
         }
     }
 
-    private void moveItem(String oldPlaylist, String newPlaylist) {
-        ResponseEntity<String> value = MusicUtil.playlistDetail(oldPlaylist);
+    private void moveItem(String oldPlaylist, String newPlaylist, String userKey) {
+        ResponseEntity<String> value = MusicUtil.playlistDetail(oldPlaylist, userKey);
         JSONArray tracks;
         try {
-            tracks = Optional.ofNullable(value).map(HttpEntity::getBody)
+            tracks = Optional.of(value).map(HttpEntity::getBody)
                     .map(JSONObject::parseObject)
                     .map(s -> s.getJSONObject("playlist"))
                     .map(s -> s.getJSONArray("tracks"))
@@ -69,16 +70,16 @@ public class MusicService {
             Optional.ofNullable(track).map(s -> s.getString("id")).ifPresent(trackList::add);
         }
         if (trackList.size() > 0) {
-            ResponseEntity<String> responseEntity = MusicUtil.playlistTracks(MusicOp.add, oldPlaylist, trackList);
+            ResponseEntity<String> responseEntity = MusicUtil.playlistTracks(MusicOp.add, oldPlaylist, trackList, userKey);
             System.out.println(responseEntity);
-            ResponseEntity<String> responseEntity1 = MusicUtil.playlistTracks(MusicOp.del, newPlaylist, trackList);
+            ResponseEntity<String> responseEntity1 = MusicUtil.playlistTracks(MusicOp.del, newPlaylist, trackList, userKey);
             System.out.println(responseEntity1);
         }
     }
 
-    public void move() {
-        moveItem(userInfo.getTodayPlaylist(), userInfo.getTotalPlaylist());
-        moveItem(userInfo.getTomorrowPlaylist(), userInfo.getTodayPlaylist());
+    public void move(String userKey) {
+        moveItem(userInfo.getTodayPlaylist(), userInfo.getTotalPlaylist(), userKey);
+        moveItem(userInfo.getTomorrowPlaylist(), userInfo.getTodayPlaylist(), userKey);
     }
 
 }
