@@ -1,12 +1,12 @@
 package com.vae1970.tool.config;
 
-import com.alibaba.fastjson.JSONObject;
-import com.vae1970.tool.dto.UserInfo;
-import com.vae1970.tool.job.MovePlaylistJob;
 import com.vae1970.tool.service.MusicService;
+import lombok.SneakyThrows;
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
@@ -15,38 +15,25 @@ import static com.vae1970.tool.consts.MusicConst.MUSIC_GROUP_NAME;
 
 /**
  * @author dongzhou.gu
- * @date 2019/10/24
+ * @date 2019/12/11
  */
 @Component
-public class InitEvent implements ApplicationListener<ContextRefreshedEvent> {
+public class ApplicationEventListener<E extends ApplicationEvent> implements ApplicationListener<E> {
 
     @Autowired
     private MusicService musicService;
 
     @Autowired
-    private UserInfo userInfo;
-
-    @Autowired
-    private MusicAccountProperties musicAccountProperties;
-
-    @Autowired
     private Scheduler scheduler;
 
-    @Autowired
-    private JobDetail dayMusic;
-
-
+    @SneakyThrows
     @Override
-    public void onApplicationEvent(ContextRefreshedEvent event) {
-        userInfo.setUserId("65656416");
-        System.out.println(userInfo);
-        System.out.println(JSONObject.toJSONString(musicAccountProperties));
-        try {
+    public void onApplicationEvent(ApplicationEvent event) {
+        if (event instanceof ContextRefreshedEvent) {
             init();
-        } catch (SchedulerException e) {
-            e.printStackTrace();
+        } else if (event instanceof ContextClosedEvent) {
+            System.out.println("关闭");
         }
-        System.out.println(JSONObject.toJSONString(this.userInfo));
     }
 
     private void init() throws SchedulerException {
@@ -57,8 +44,8 @@ public class InitEvent implements ApplicationListener<ContextRefreshedEvent> {
         scheduler.unscheduleJob(triggerKey);
         scheduler.deleteJob(JobKey.jobKey(MOVE_PLAYLIST_JOB_NAME, MUSIC_GROUP_NAME));
 
-        Trigger trigger = MovePlaylistJob.getTrigger();
-        scheduler.scheduleJob(dayMusic, trigger);
+//        Trigger trigger = MovePlaylistJob.getTrigger();
+//        scheduler.scheduleJob(dayMusic, trigger);
     }
 
 }

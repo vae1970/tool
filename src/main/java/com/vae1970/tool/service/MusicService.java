@@ -29,7 +29,7 @@ public class MusicService {
         JSONArray playlistArray = Optional.ofNullable(userInfo.getUserId())
                 .map(i -> MusicUtil.playlist(i, userInfo.getUserId())).map(HttpEntity::getBody)
                 .map(JSONObject::parseObject).map(s -> s.getJSONArray("playlist")).orElse(new JSONArray());
-        for (int i = 0; i < playlistArray.size(); i++) {
+         for (int i = 0; i < playlistArray.size(); i++) {
             JSONObject playlist = playlistArray.getJSONObject(i);
             String playlistName = Optional.ofNullable(playlist).map(s -> s.getString("name")).orElse("");
             String id = Optional.ofNullable(playlist).map(s -> s.getString("id")).orElse("");
@@ -63,7 +63,7 @@ public class MusicService {
             System.out.println("-----------------------------------");
             e.printStackTrace();
         }
-        System.out.println(value == null ? null : value.getBody());
+        System.out.println(value.getBody());
         List<Object> trackList = new ArrayList<>();
         for (int i = 0; i < tracks.size(); i++) {
             JSONObject track = tracks.getJSONObject(i);

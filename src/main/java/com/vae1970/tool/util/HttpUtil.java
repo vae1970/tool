@@ -21,7 +21,6 @@ import org.apache.http.impl.cookie.DefaultCookieSpecProvider;
 import org.apache.http.util.EntityUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.util.UriBuilder;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -46,45 +45,6 @@ public class HttpUtil {
     private static final Charset ENCODING = StandardCharsets.UTF_8;
     private static final int CONNECT_TIMEOUT = 6000;
     private static final int SOCKET_TIMEOUT = 6000;
-
-    static {
-        CONTEXT_MAP.set(map -> {
-            String domain = "http://127.0.0.1:3000/s";
-
-            Map<String, HttpClientContext> stringHttpClientContextMap = null;
-            try {
-                stringHttpClientContextMap = map.computeIfAbsent(new URIBuilder(domain).getHost(), k -> new HashMap<>(16));
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-            }
-
-            CookieStore cookieStore = new BasicCookieStore();
-            BasicClientCookie cookie1 = new BasicClientCookie("MUSIC_U", "4fcdf12fbb765d3fb6915760a74f0fecc6b337a95149f5f960b4db66c2b3604cabbae36d280a3d122d3c3f94f9a73db07955a739ab43dce1");
-            cookie1.setDomain(domain);
-            cookie1.setPath("/");
-            cookieStore.addCookie(cookie1);
-
-            BasicClientCookie cookie2 = new BasicClientCookie("__csrf", "ba5864537e99876ccf93f5f4f7b74cdb");
-            cookie2.setDomain(domain);
-            cookie2.setPath("/");
-            cookieStore.addCookie(cookie2);
-
-            BasicClientCookie cookie3 = new BasicClientCookie("__remember_me", "true");
-            cookie3.setDomain(domain);
-            cookie3.setPath("/");
-            cookieStore.addCookie(cookie3);
-
-            HttpClientContext context = HttpClientContext.create();
-            Registry<CookieSpecProvider> registry = RegistryBuilder
-                    .<CookieSpecProvider>create()
-                    .register(CookieSpecs.DEFAULT, new DefaultCookieSpecProvider())
-                    .build();
-            context.setCookieSpecRegistry(registry);
-            context.setCookieStore(cookieStore);
-            stringHttpClientContextMap.put("65656416", context);
-            return "";
-        });
-    }
 
     /**
      * HTTP GET method
@@ -163,8 +123,8 @@ public class HttpUtil {
 
     private static String updateContext(HttpResponse httpResponse, URIBuilder uriBuilder, Charset charset, Function<String, String> userKeyFunction) {
         return CONTEXT_MAP.set(map -> {
-            String domain = uriBuilder.getHost();
-            Map<String, HttpClientContext> stringHttpClientContextMap = map.computeIfAbsent(domain, k -> new HashMap<>(16));
+            Map<String, HttpClientContext> stringHttpClientContextMap = map.computeIfAbsent(uriBuilder.getHost()
+                    , k -> new HashMap<>(16));
             CookieStore cookieStore = getCookie(httpResponse, uriBuilder);
             HttpClientContext context = HttpClientContext.create();
             Registry<CookieSpecProvider> registry = RegistryBuilder
@@ -199,7 +159,6 @@ public class HttpUtil {
                                 BasicClientCookie cookie = new BasicClientCookie(kv[0], kv[1]);
                                 System.out.println(kv[0] + "   " + kv[1]);
                                 cookie.setDomain(uriBuilder.getHost());
-                                cookie.setPath(uriBuilder.getPath());
                                 cookieStore.addCookie(cookie);
                             }
                         }
