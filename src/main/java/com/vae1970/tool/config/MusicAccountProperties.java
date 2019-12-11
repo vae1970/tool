@@ -2,8 +2,10 @@ package com.vae1970.tool.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
+
+import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 
 /**
  * @author dongzhou.gu
@@ -12,12 +14,12 @@ import org.springframework.validation.annotation.Validated;
 @Data
 @Validated
 @ConfigurationProperties(prefix = "music")
-public class MusicAccountProperties {
+public class MusicAccountProperties implements Serializable {
 
-    //    @NotNull
+    @NotNull
     private String phone;
 
-    //    @NotNull
+    @NotNull
     private String password;
 
 }

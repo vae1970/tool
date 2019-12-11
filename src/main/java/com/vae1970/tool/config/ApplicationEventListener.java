@@ -1,8 +1,12 @@
 package com.vae1970.tool.config;
 
+import com.vae1970.tool.service.CacheService;
 import com.vae1970.tool.service.MusicService;
 import lombok.SneakyThrows;
-import org.quartz.*;
+import org.quartz.JobKey;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.TriggerKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
@@ -21,6 +25,9 @@ import static com.vae1970.tool.consts.MusicConst.MUSIC_GROUP_NAME;
 public class ApplicationEventListener<E extends ApplicationEvent> implements ApplicationListener<E> {
 
     @Autowired
+    private CacheService cacheService;
+
+    @Autowired
     private MusicService musicService;
 
     @Autowired
@@ -32,20 +39,22 @@ public class ApplicationEventListener<E extends ApplicationEvent> implements App
         if (event instanceof ContextRefreshedEvent) {
             init();
         } else if (event instanceof ContextClosedEvent) {
-            System.out.println("关闭");
+            close();
         }
     }
 
     private void init() throws SchedulerException {
+        cacheService.load();
         musicService.init();
         //  先移除旧任务，再开启新任务
         TriggerKey triggerKey = TriggerKey.triggerKey(MOVE_PLAYLIST_JOB_NAME, MUSIC_GROUP_NAME);
         scheduler.pauseTrigger(triggerKey);
         scheduler.unscheduleJob(triggerKey);
         scheduler.deleteJob(JobKey.jobKey(MOVE_PLAYLIST_JOB_NAME, MUSIC_GROUP_NAME));
+    }
 
-//        Trigger trigger = MovePlaylistJob.getTrigger();
-//        scheduler.scheduleJob(dayMusic, trigger);
+    private void close() {
+        cacheService.sync();
     }
 
 }
